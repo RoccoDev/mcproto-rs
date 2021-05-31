@@ -280,7 +280,7 @@ macro_rules! define_protocol {
             }
         }
 
-        impl crate::protocol::HasPacketKind for $packett {
+        impl $crate::protocol::HasPacketKind for $packett {
             type Kind = $kindt;
 
             fn kind(&self) -> Self::Kind {
@@ -290,18 +290,18 @@ macro_rules! define_protocol {
             }
         }
 
-        impl crate::protocol::HasPacketId for $packett {
-            fn version() -> crate::types::VarInt {
-                crate::types::VarInt($version)
+        impl $crate::protocol::HasPacketId for $packett {
+            fn version() -> $crate::types::VarInt {
+                $crate::types::VarInt($version)
             }
 
-            fn id(&self) -> crate::protocol::Id {
-                crate::protocol::HasPacketKind::kind(self).id()
+            fn id(&self) -> $crate::protocol::Id {
+                $crate::protocol::HasPacketKind::kind(self).id()
             }
         }
 
-        impl crate::protocol::HasPacketBody for $packett {
-            fn mc_serialize_body<S>(&self, to: &mut S) -> crate::SerializeResult where S: crate::Serializer {
+        impl $crate::protocol::HasPacketBody for $packett {
+            fn mc_serialize_body<S>(&self, to: &mut S) -> $crate::SerializeResult where S: $crate::Serializer {
                 use self::$packett::*;
                 match self {
                     $($nam(body) => to.serialize_other(body)),+
@@ -309,21 +309,21 @@ macro_rules! define_protocol {
             }
         }
 
-        impl crate::protocol::Packet for $packett {}
+        impl $crate::protocol::Packet for $packett {}
 
         impl $packett {
-            pub fn describe() -> crate::protocol::ProtocolSpec {
-                crate::protocol::ProtocolSpec {
+            pub fn describe() -> $crate::protocol::ProtocolSpec {
+                $crate::protocol::ProtocolSpec {
                     name: stringify!($packett).to_owned(),
                     packets: alloc::vec!(
-                        $(crate::protocol::ProtocolPacketSpec{
+                        $($crate::protocol::ProtocolPacketSpec{
                             state: stringify!($state).to_owned(),
                             direction: stringify!($direction).to_owned(),
                             id: $id,
                             name: stringify!($nam).to_owned(),
                             body_struct: stringify!($body).to_owned(),
                             fields: alloc::vec!(
-                                $(crate::protocol::ProtocolPacketField{
+                                $($crate::protocol::ProtocolPacketField{
                                     name: stringify!($fnam).to_owned(),
                                     kind: stringify!($ftyp).to_owned(),
                                 }),*
@@ -334,7 +334,7 @@ macro_rules! define_protocol {
             }
         }
 
-        impl<'a> crate::protocol::HasPacketKind for $rawpackett<'a> {
+        impl<'a> $crate::protocol::HasPacketKind for $rawpackett<'a> {
             type Kind = $kindt;
 
             fn kind(&self) -> Self::Kind {
@@ -344,26 +344,26 @@ macro_rules! define_protocol {
             }
         }
 
-        impl<'a> crate::protocol::HasPacketId for $rawpackett<'a> {
-            fn id(&self) -> crate::protocol::Id {
-                crate::protocol::HasPacketKind::kind(self).id()
+        impl<'a> $crate::protocol::HasPacketId for $rawpackett<'a> {
+            fn id(&self) -> $crate::protocol::Id {
+                $crate::protocol::HasPacketKind::kind(self).id()
             }
 
-            fn version() -> crate::types::VarInt {
-                crate::types::VarInt($version)
+            fn version() -> $crate::types::VarInt {
+                $crate::types::VarInt($version)
             }
         }
 
-        impl<'a> crate::protocol::RawPacket<'a> for $rawpackett<'a> {
+        impl<'a> $crate::protocol::RawPacket<'a> for $rawpackett<'a> {
 
             type Packet = $packett;
 
-            fn create(id: crate::protocol::Id, data: &'a[u8]) -> Result<Self, crate::protocol::PacketErr> {
-                use crate::protocol::PacketKind;
+            fn create(id: $crate::protocol::Id, data: &'a[u8]) -> Result<Self, $crate::protocol::PacketErr> {
+                use $crate::protocol::PacketKind;
                 if let Some(kind) = $kindt::from_id(id) {
                     Ok(kind.with_body_data(data))
                 } else {
-                    Err(crate::protocol::PacketErr::UnknownId(id))
+                    Err($crate::protocol::PacketErr::UnknownId(id))
                 }
             }
 
@@ -375,8 +375,8 @@ macro_rules! define_protocol {
                 }
             }
 
-            fn deserialize(&self) -> Result<Self::Packet, crate::protocol::PacketErr> {
-                use crate::protocol::PacketErr::{ExtraData, DeserializeFailed};
+            fn deserialize(&self) -> Result<Self::Packet, $crate::protocol::PacketErr> {
+                use $crate::protocol::PacketErr::{ExtraData, DeserializeFailed};
 
                 match self {
                     $($rawpackett::$nam(bod) => {
@@ -399,9 +399,9 @@ macro_rules! define_protocol {
             _typ: core::marker::PhantomData<T>
         }
 
-        impl<'a, T> $rawdt<'a, T> where T: crate::Deserialize {
-            pub fn deserialize(&self) -> Result<T, crate::protocol::PacketErr> {
-                use crate::protocol::PacketErr::*;
+        impl<'a, T> $rawdt<'a, T> where T: $crate::Deserialize {
+            pub fn deserialize(&self) -> Result<T, $crate::protocol::PacketErr> {
+                use $crate::protocol::PacketErr::*;
 
                 let Deserialized { value: body, data: rest } = T::mc_deserialize(self.data).map_err(DeserializeFailed)?;
                 if !rest.is_empty() {
@@ -412,29 +412,29 @@ macro_rules! define_protocol {
             }
         }
 
-        impl crate::protocol::HasPacketId for $kindt {
-            fn id(&self) -> crate::protocol::Id {
+        impl $crate::protocol::HasPacketId for $kindt {
+            fn id(&self) -> $crate::protocol::Id {
                 use self::$kindt::*;
-                use crate::protocol::State::*;
-                use crate::protocol::PacketDirection::*;
+                use $crate::protocol::State::*;
+                use $crate::protocol::PacketDirection::*;
 
                 match self {
                     $($nam => ($id, $state, $direction)),*
                 }.into()
             }
 
-            fn version() -> crate::types::VarInt {
-                crate::types::VarInt($version)
+            fn version() -> $crate::types::VarInt {
+                $crate::types::VarInt($version)
             }
         }
 
-        impl crate::protocol::PacketKind for $kindt {
+        impl $crate::protocol::PacketKind for $kindt {
             #[cfg(feature = "gat")]
             type RawPacket<'a> = $rawpackett<'a>;
 
-            fn from_id(id: crate::protocol::Id) -> Option<Self> {
+            fn from_id(id: $crate::protocol::Id) -> Option<Self> {
                 match (id.id, id.state, id.direction) {
-                    $(($id, crate::protocol::State::$state, crate::protocol::PacketDirection::$direction) => Some($kindt::$nam)),*,
+                    $(($id, $crate::protocol::State::$state, $crate::protocol::PacketDirection::$direction) => Some($kindt::$nam)),*,
                     _ => None
                 }
             }
@@ -521,7 +521,7 @@ macro_rules! proto_enum_with_type {
 
         impl $typname {
             pub const fn variant_count() -> usize {
-                crate::strip_plus!($(+ crate::instead_of_ident!($bval, 1))+)
+                $crate::strip_plus!($(+ $crate::instead_of_ident!($bval, 1))+)
             }
 
             pub fn deserialize_with_id<'a>(id: $typ, data: &'a[u8]) -> DeserializeResult<'a, Self> {
@@ -599,7 +599,7 @@ macro_rules! proto_int_enum {
 #[macro_export]
 macro_rules! proto_str_enum {
     ($typname: ident, $($sval: literal :: $nam: ident $(($bod: ident))?),*) => {
-        crate::as_item! {
+        $crate::as_item! {
             #[derive(PartialEq, Clone, Debug)]
             pub enum $typname {
                 $($nam $(($bod))?),*
@@ -624,7 +624,7 @@ macro_rules! proto_str_enum {
 
         impl $typname {
             pub const fn variant_count() -> usize {
-                crate::strip_plus!($(+ crate::instead_of_ident!($sval, 1))+)
+                $crate::strip_plus!($(+ $crate::instead_of_ident!($sval, 1))+)
             }
 
             pub fn name(&self) -> &str {
